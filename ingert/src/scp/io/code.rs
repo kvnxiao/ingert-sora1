@@ -143,11 +143,8 @@ pub fn read(
 			op@40.. => return OpSnafu { op, pos }.fail(),
 		};
 		tracing::trace!("{pos} {op:?}");
-		let is_end = if let Some(end) = end {
-			f.pos() >= end
-		} else {
-			op == Op::Return && pos >= extent.get()
-		};
+		let is_end = (op == Op::Return && pos >= extent.get())
+			|| end.is_some_and(|e| f.pos() >= e);
 		ops.push((pos, op));
 		if is_end {
 			break;
