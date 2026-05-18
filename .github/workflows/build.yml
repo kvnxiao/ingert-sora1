@@ -1,0 +1,45 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    name: Build ingert.exe
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install Rust nightly
+        uses: dtolnay/rust-toolchain@nightly
+
+      - name: Toolchain info
+        run: |
+          rustc +nightly --version
+          cargo +nightly --version
+
+      - name: Build (release, nightly)
+        run: cargo +nightly build --release --locked
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: ingert-windows-x86_64
+          path: target/release/ingert.exe
+          if-no-files-found: error
+
+      - name: Attach to GitHub release (tags only)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v3
+        with:
+          files: target/release/ingert.exe
+          fail_on_unmatched_files: true
